@@ -375,11 +375,13 @@ function switchPage(page) {
 
 // ===== UI 工具 =====
 function showLogin() {
+  document.body.classList.remove('app-mode');
   document.getElementById('login-page').style.display = 'flex';
   document.getElementById('main-app').style.display = 'none';
 }
 
 function showApp() {
+  document.body.classList.add('app-mode');
   document.getElementById('login-page').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   // 更新菜单可见性
@@ -457,6 +459,11 @@ async function handleImageUpload(input, bucket, callback) {
 
 // ===== 初始化 =====
 async function init() {
+  // 平台检测并标记到 body
+  const platform = permissionManager.detectPlatform();
+  document.body.dataset.platform = platform;
+  console.log('[App] Platform:', platform);
+
   try {
     const loggedIn = await auth.checkSession();
     if (loggedIn && state.supplier) {

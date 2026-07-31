@@ -687,9 +687,177 @@ img { max-width: 100%; display: block; }
   margin-bottom: 12px;
 }
 
-/* ===== Responsive ===== */
+/* ===== PC 端布局 (≥768px) ===== */
 @media (min-width: 768px) {
-  body { max-width: 500px; margin: 0 auto; }
+  body {
+    padding-bottom: 0;
+  }
+  /* 仅主应用模式时才添加左侧padding */
+  body.app-mode {
+    padding-left: 220px;
+  }
+
+  /* Header */
+  .app-header {
+    padding: 14px 32px;
+  }
+  .app-header h1 {
+    font-size: 18px;
+  }
+
+  /* Tab Bar → 左侧导航栏 */
+  .tab-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    flex-direction: column;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    background: #FAFBFC;
+    padding: 0;
+    overflow-y: auto;
+    z-index: 150;
+  }
+  .tab-bar::before {
+    content: '异采 YiCai';
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tab-item {
+    flex: none;
+    flex-direction: row;
+    padding: 14px 24px;
+    gap: 12px;
+    border-radius: 0;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-item:hover {
+    background: var(--primary-light);
+  }
+  .tab-item.active {
+    background: var(--primary-light);
+    border-left-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .tab-icon {
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+  .tab-label {
+    font-size: 14px;
+  }
+
+  /* Page Container */
+  .page {
+    padding: 24px 32px;
+    max-width: 1200px;
+  }
+  .page-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* Stats Grid → 4 columns */
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    padding: 20px;
+  }
+  .stat-value {
+    font-size: 32px;
+  }
+
+  /* Cards → more spacious */
+  .card {
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  /* Dashboard 待办/订单并排 */
+  #page-dashboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  #page-dashboard > div:first-child {
+    width: 100%;
+    flex-basis: 100%;
+  }
+  #page-dashboard > .stats-grid {
+    width: 100%;
+    flex-basis: 100%;
+    margin-bottom: 0;
+  }
+  #page-dashboard > .card {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 300px;
+  }
+
+  /* Modal → 居中显示 */
+  .modal-overlay {
+    align-items: center;
+  }
+  .modal-content {
+    border-radius: var(--radius);
+    max-width: 560px;
+    padding: 28px 24px;
+  }
+
+  /* Profile Header 横向布局 */
+  .profile-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    text-align: left;
+    padding: 24px;
+  }
+  .profile-avatar {
+    margin: 0;
+    width: 64px;
+    height: 64px;
+    font-size: 24px;
+  }
+  .profile-name {
+    font-size: 20px;
+  }
+
+  /* Filter tabs 更宽松 */
+  .filter-tabs {
+    gap: 10px;
+  }
+  .filter-tab {
+    padding: 8px 20px;
+    font-size: 14px;
+  }
+
+  /* Order/Product Cards 更宽松 */
+  .order-card,
+  .product-card,
+  .inquiry-card {
+    padding: 20px;
+  }
+
+  /* Login Page 居中但放宽 */
+  .login-page {
+    padding: 40px;
+  }
+  .login-card {
+    max-width: 440px;
+    padding: 36px 32px;
+  }
 }
 
 /* ===== Utility ===== */
