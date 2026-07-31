@@ -64,6 +64,12 @@ const dashboard = {
     document.getElementById('todo-list').innerHTML = todoHtml;
 
     // 供应商名称
-    document.getElementById('supplier-greeting').textContent = `你好，${state.supplier.short_name || state.supplier.company_name}`;
+    const greetingEl = document.getElementById('supplier-greeting');
+    const supplierName = state.supplier.short_name || state.supplier.company_name;
+    if (state.supplier.is_featured) {
+      greetingEl.innerHTML = `你好，${supplierName} <span style="background:#f59e0b;color:white;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:500;">⭐ 平台精选</span>`;
+    } else {
+      greetingEl.textContent = `你好，${supplierName}`;
+    }
   }
 };
