@@ -469,12 +469,14 @@ async function init() {
     if (loggedIn && state.supplier) {
       showApp();
     } else if (loggedIn && !state.supplier) {
-      // 登录了但没有关联供应商 - 检查是否是公司管理员/员工
-      if (window.userPermissions && (window.userPermissions.isCompanyAdmin || window.userPermissions.isPlatformAdmin)) {
+      // 登录了但没有关联供应商 - 检查是否有角色权限
+      const hasRoles = window.userRoles && window.userRoles.length > 0;
+      const isAdmin = window.userPermissions && (window.userPermissions.isCompanyAdmin || window.userPermissions.isPlatformAdmin);
+      if (hasRoles || isAdmin) {
         showApp();
       } else {
         showLogin();
-        showToast('请绑定您的供应商账号');
+        showToast('请联系管理员为您分配角色或绑定供应商账号');
       }
     } else {
       showLogin();
@@ -501,11 +503,14 @@ document.addEventListener('submit', async (e) => {
     btn.textContent = '登录中...';
     try {
       await auth.signIn(email, password);
-      if (state.supplier || (window.userPermissions && (window.userPermissions.isCompanyAdmin || window.userPermissions.isPlatformAdmin))) {
+      const hasSupplier = !!state.supplier;
+      const hasRoles = window.userRoles && window.userRoles.length > 0;
+      const isAdmin = window.userPermissions && (window.userPermissions.isCompanyAdmin || window.userPermissions.isPlatformAdmin);
+      if (hasSupplier || hasRoles || isAdmin) {
         showApp();
         showToast('欢迎回来 👋');
       } else {
-        showToast('未找到关联的供应商账号');
+        showToast('请联系管理员为您分配角色或绑定供应商账号');
       }
     } catch (err) {
       showToast('登录失败: ' + err.message);
