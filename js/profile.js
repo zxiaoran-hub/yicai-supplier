@@ -3,7 +3,38 @@
  */
 const profile = {
   async load() {
-    if (!state.supplier) return;
+    // 没有供应商档案时，只显示基本账号信息
+    if (!state.supplier) {
+      // Header角色徽章
+      const headerBadge = document.getElementById('header-role-badge');
+      if (headerBadge) {
+        if (window.userPermissions?.isPlatformAdmin) {
+          headerBadge.textContent = '🔑 平台管理员';
+        } else if (window.userPermissions?.isCompanyAdmin) {
+          headerBadge.textContent = '🛡️ 公司管理员';
+        } else if (window.userRoles && window.userRoles.length) {
+          headerBadge.textContent = window.userRoles[0];
+        }
+      }
+      // 账号设置区域 - 显示邮箱和角色
+      const emailEl = document.getElementById('settings-email');
+      if (emailEl && state.user) {
+        emailEl.textContent = state.user.email;
+      }
+      const settingsRoleEl = document.getElementById('settings-role');
+      if (settingsRoleEl && window.userRoles) {
+        settingsRoleEl.textContent = window.userRoles.join(', ') || '普通用户';
+      }
+      // 显示提示
+      const profileArea = document.querySelector('#page-profile .profile-header');
+      if (profileArea) {
+        const avatarText = document.getElementById('profile-avatar-text');
+        const companyName = document.getElementById('profile-company-name');
+        if (avatarText) avatarText.textContent = (state.user?.email || '?').charAt(0).toUpperCase();
+        if (companyName) companyName.textContent = '待完善供应商档案';
+      }
+      return;
+    }
     const s = state.supplier;
 
     // 基本信息

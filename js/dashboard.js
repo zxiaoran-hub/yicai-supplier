@@ -3,7 +3,29 @@
  */
 const dashboard = {
   async load() {
-    if (!state.supplier) return;
+    // 没有供应商档案时，显示欢迎信息
+    if (!state.supplier) {
+      const greetingEl = document.getElementById('supplier-greeting');
+      const email = state.user ? state.user.email : '';
+      const roleName = (window.userRoles && window.userRoles.length) ? window.userRoles[0] : '用户';
+      if (greetingEl) {
+        greetingEl.textContent = `你好，${email}`;
+      }
+      // 隐藏供应商专属区域
+      document.getElementById('stat-orders').textContent = '-';
+      document.getElementById('stat-products').textContent = '-';
+      document.getElementById('stat-revenue').textContent = '-';
+      document.getElementById('stat-rating').textContent = '-';
+      document.getElementById('recent-orders').innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">暂无供应商档案，请联系管理员完善信息</div></div>';
+      document.getElementById('todo-list').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">👋</div>
+          <div class="empty-text">欢迎加入异采平台</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:8px;">您的账号已激活，请联系管理员完善供应商档案后即可使用全部功能</div>
+        </div>
+      `;
+      return;
+    }
     const sid = state.supplier.id;
 
     // 并行加载数据
