@@ -386,7 +386,38 @@ function showApp() {
   document.getElementById('main-app').style.display = 'block';
   // 更新菜单可见性
   updateMenuVisibility();
+  // 更新侧边栏用户信息（PC端）
+  updateSidebarUserInfo();
   switchPage('dashboard');
+}
+
+function updateSidebarUserInfo() {
+  const avatarText = document.getElementById('sidebar-avatar-text');
+  const userName = document.getElementById('sidebar-user-name');
+  const userRole = document.getElementById('sidebar-user-role');
+  const headerBadge = document.getElementById('header-role-badge');
+
+  if (state.supplier) {
+    const s = state.supplier;
+    if (avatarText) avatarText.textContent = (s.short_name || s.company_name || '?').charAt(0);
+    if (userName) userName.textContent = s.company_name || s.short_name || '-';
+    if (userRole) userRole.textContent = window.userRoles?.join(' / ') || '供应商';
+  } else if (state.user) {
+    if (avatarText) avatarText.textContent = (state.user.email || '?').charAt(0).toUpperCase();
+    if (userName) userName.textContent = state.user.email || '-';
+    if (userRole) userRole.textContent = window.userRoles?.join(' / ') || '用户';
+  }
+
+  // Header badge
+  if (headerBadge) {
+    if (window.userPermissions?.isPlatformAdmin) {
+      headerBadge.textContent = '🔑 平台管理员';
+    } else if (window.userPermissions?.isCompanyAdmin) {
+      headerBadge.textContent = '🛡️ 公司管理员';
+    } else if (window.userRoles && window.userRoles.length) {
+      headerBadge.textContent = window.userRoles[0];
+    }
+  }
 }
 
 function showToast(msg, duration = 2000) {

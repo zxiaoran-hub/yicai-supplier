@@ -138,8 +138,42 @@ img { max-width: 100%; display: block; }
   top: 0;
   z-index: 100;
 }
-.app-header h1 { font-size: 17px; font-weight: 600; }
-.header-user { font-size: 12px; opacity: 0.9; cursor: pointer; }
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.header-title-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+}
+.header-right { display: flex; align-items: center; gap: 12px; }
+.header-user-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.2);
+  color: white;
+}
+.header-logout {
+  font-size: 12px;
+  color: rgba(255,255,255,0.8);
+  cursor: pointer;
+}
+.header-logout:hover { color: white; }
 
 /* ===== Bottom Tab Bar ===== */
 .tab-bar {
@@ -687,28 +721,84 @@ img { max-width: 100%; display: block; }
   margin-bottom: 12px;
 }
 
+/* ===== Sidebar 用户信息（移动端隐藏） ===== */
+.sidebar-user-info {
+  display: none;
+}
+
 /* ===== PC 端布局 (≥768px) ===== */
 @media (min-width: 768px) {
   body {
     padding-bottom: 0;
   }
-  /* 仅主应用模式时才添加左侧padding */
+  /* 仅主应用模式时才添加左侧padding和顶部padding（为fixed header留空） */
   body.app-mode {
     padding-left: 220px;
+    padding-top: 56px;
   }
 
-  /* Header */
+  /* ── Header → 全宽顶栏 56px ── */
   .app-header {
-    padding: 14px 32px;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 56px;
+    z-index: 200;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    color: var(--dark);
   }
-  .app-header h1 {
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-logo {
+    width: 36px; height: 36px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 18px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .header-title-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-user-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    background: var(--primary-light);
+    color: var(--primary);
+  }
+  .header-logout {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .header-logout:hover {
+    color: var(--danger);
   }
 
-  /* Tab Bar → 左侧导航栏 */
+  /* ── Sidebar 左侧导航 ── */
   .tab-bar {
     position: fixed;
-    top: 0;
+    top: 56px;
     left: 0;
     bottom: 0;
     width: 220px;
@@ -721,21 +811,12 @@ img { max-width: 100%; display: block; }
     z-index: 150;
   }
   .tab-bar::before {
-    content: '异采 YiCai';
-    display: flex;
-    align-items: center;
-    height: 56px;
-    padding: 0 24px;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--primary);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    display: none;
   }
   .tab-item {
     flex: none;
     flex-direction: row;
-    padding: 14px 24px;
+    padding: 12px 24px;
     gap: 12px;
     border-radius: 0;
     border-left: 3px solid transparent;
@@ -758,10 +839,50 @@ img { max-width: 100%; display: block; }
     font-size: 14px;
   }
 
-  /* Page Container */
+  /* ── Sidebar 底部用户信息 ── */
+  .sidebar-user-info {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .sidebar-user-info:hover {
+    background: var(--primary-light);
+  }
+  .sidebar-user-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .sidebar-user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+  }
+  .sidebar-user-role {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .sidebar-user-detail {
+    min-width: 0;
+  }
+
+  /* ── Page Container ── */
   .page {
     padding: 24px 32px;
-    max-width: 1200px;
+    max-width: 1100px;
   }
   .page-title {
     font-size: 20px;
@@ -786,6 +907,7 @@ img { max-width: 100%; display: block; }
     padding: 20px;
     margin-bottom: 16px;
   }
+
   /* Dashboard 待办/订单并排 */
   #page-dashboard {
     display: flex;
@@ -806,13 +928,13 @@ img { max-width: 100%; display: block; }
     min-width: 300px;
   }
 
-  /* Modal → 居中显示 */
+  /* Modal → 居中，加宽 */
   .modal-overlay {
     align-items: center;
   }
   .modal-content {
     border-radius: var(--radius);
-    max-width: 560px;
+    max-width: 600px;
     padding: 28px 24px;
   }
 
@@ -820,9 +942,9 @@ img { max-width: 100%; display: block; }
   .profile-header {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     text-align: left;
-    padding: 24px;
+    padding: 24px 28px;
   }
   .profile-avatar {
     margin: 0;
@@ -832,6 +954,21 @@ img { max-width: 100%; display: block; }
   }
   .profile-name {
     font-size: 20px;
+  }
+
+  /* Profile Tabs 更宽 */
+  .profile-tabs {
+    margin: 0 0 16px;
+  }
+  .profile-tab {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  /* 信息行两列布局 */
+  .profile-section .info-row {
+    display: grid;
+    grid-template-columns: 100px 1fr;
   }
 
   /* Filter tabs 更宽松 */
@@ -845,9 +982,19 @@ img { max-width: 100%; display: block; }
 
   /* Order/Product Cards 更宽松 */
   .order-card,
-  .product-card,
   .inquiry-card {
     padding: 20px;
+  }
+
+  /* Product grid → 3 cols on PC */
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* Photo grid → more columns */
+  .photo-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 
   /* Login Page 居中但放宽 */

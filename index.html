@@ -66,8 +66,14 @@
 <div id="main-app" style="display:none;">
   <!-- Header -->
   <div class="app-header">
-    <h1>异采 · 供应商</h1>
-    <div id="header-role-badge" style="font-size:11px;opacity:0.85;"></div>
+    <div class="header-brand">
+      <div class="header-logo">异</div>
+      <span class="header-title-text">异采 · 供应商</span>
+    </div>
+    <div class="header-right">
+      <span class="header-user-badge" id="header-role-badge">-</span>
+      <span class="header-logout" onclick="if(confirm('确定退出登录？')) auth.signOut()">退出</span>
+    </div>
   </div>
 
   <!-- ===== 工作台 ===== -->
@@ -293,6 +299,13 @@
     <div class="tab-item" data-page="profile" onclick="switchPage('profile')">
       <span class="tab-icon">👤</span>
       <span class="tab-label">我的</span>
+    </div>
+    <div class="sidebar-user-info" id="sidebar-user-info" onclick="switchPage('profile')">
+      <div class="sidebar-user-avatar"><span id="sidebar-avatar-text">供</span></div>
+      <div class="sidebar-user-detail">
+        <div class="sidebar-user-name" id="sidebar-user-name">-</div>
+        <div class="sidebar-user-role" id="sidebar-user-role">-</div>
+      </div>
     </div>
   </div>
 </div>
