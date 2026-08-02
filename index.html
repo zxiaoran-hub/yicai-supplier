@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>异采 · 供应商端</title>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
@@ -59,6 +59,45 @@
         已有账号？<a onclick="toggleAuthForm('login');">返回登录</a>
       </div>
     </form>
+  </div>
+
+  <!-- 演示模式入口 -->
+  <div id="demo-entry" class="login-card" style="background:transparent;box-shadow:none;padding:8px 0;text-align:center;">
+    <a href="javascript:void(0)" onclick="showDemoPanel()" style="color:var(--primary);font-size:14px;text-decoration:none;opacity:0.85;transition:opacity .2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.85'">🎭 演示模式体验</a>
+  </div>
+
+  <!-- 演示模式面板 -->
+  <div id="demo-panel" class="login-card" style="display:none;">
+    <div class="login-back" onclick="hideDemoPanel()">← 返回登录</div>
+    <h3 style="margin-bottom:4px;">🎭 演示模式</h3>
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">选择一个演示账号，快速体验供应商端功能</p>
+
+    <div class="demo-role-label">广州供应商</div>
+    <div class="demo-card" onclick="demoLogin('demo_gz@yicai.demo', 'Demo@2026')">
+      <div class="demo-card-left">
+        <span class="demo-role-tag" style="background:var(--primary);color:#fff;">广州</span>
+        <span class="demo-email">demo_gz@yicai.demo</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();demoLogin('demo_gz@yicai.demo', 'Demo@2026')">一键登录</button>
+    </div>
+
+    <div class="demo-role-label" style="margin-top:12px;">上海供应商</div>
+    <div class="demo-card" onclick="demoLogin('demo_sh@yicai.demo', 'Demo@2026')">
+      <div class="demo-card-left">
+        <span class="demo-role-tag" style="background:var(--primary);color:#fff;">上海</span>
+        <span class="demo-email">demo_sh@yicai.demo</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();demoLogin('demo_sh@yicai.demo', 'Demo@2026')">一键登录</button>
+    </div>
+
+    <div class="demo-role-label" style="margin-top:12px;">杭州供应商</div>
+    <div class="demo-card" onclick="demoLogin('demo_hz@yicai.demo', 'Demo@2026')">
+      <div class="demo-card-left">
+        <span class="demo-role-tag" style="background:var(--primary);color:#fff;">杭州</span>
+        <span class="demo-email">demo_hz@yicai.demo</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();demoLogin('demo_hz@yicai.demo', 'Demo@2026')">一键登录</button>
+    </div>
   </div>
 </div>
 
@@ -641,6 +680,39 @@
 <script src="js/roles.js?v=3"></script>
 <script src="js/staff.js?v=3"></script>
 <script src="js/profile.js?v=3"></script>
+<script>
+// ===== 演示模式功能 =====
+function showDemoPanel() {
+  document.querySelector('.login-card').style.display = 'none';
+  document.getElementById('demo-entry').style.display = 'none';
+  document.getElementById('demo-panel').style.display = 'block';
+}
+
+function hideDemoPanel() {
+  document.getElementById('demo-panel').style.display = 'none';
+  document.querySelector('.login-card').style.display = 'block';
+  document.getElementById('demo-entry').style.display = 'block';
+}
+
+function demoLogin(email, password) {
+  document.getElementById('demo-panel').style.display = 'none';
+  document.querySelector('.login-card').style.display = 'block';
+  document.getElementById('demo-entry').style.display = 'block';
+
+  // 确保是登录表单（不是注册）
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('register-form').style.display = 'none';
+
+  // 填入凭据
+  document.querySelector('#login-form input[name="email"]').value = email;
+  document.querySelector('#login-form input[name="password"]').value = password;
+
+  // 触发登录
+  setTimeout(() => {
+    document.getElementById('login-form').dispatchEvent(new Event('submit', { bubbles: true }));
+  }, 200);
+}
+</script>
 
 </body>
 </html>
