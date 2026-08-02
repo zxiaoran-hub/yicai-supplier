@@ -1,5 +1,7 @@
 /**
- * 商品管理页面
+ * 商品管理页面 - 供应商端
+ * 字段：name, category, description, images, moq, price_min, price_max, price_unit,
+ *       lead_time, custom_capability, sample_available, sample_price, specifications, status
  */
 const products = {
   allProducts: [],
@@ -12,7 +14,7 @@ const products = {
       .eq('supplier_id', state.supplier.id)
       .order('created_at', { ascending: false });
 
-    if (error) { showToast('加载商品失败'); return; }
+    if (error) { showToast('加载商品失败: ' + error.message); return; }
 
     this.allProducts = data || [];
     this.render();
@@ -20,21 +22,43 @@ const products = {
 
   render() {
     const canAdd = hasPermission('btn:product:add');
-    // 控制添加按钮可见性
     const addBtn = document.querySelector('#page-products .btn-primary');
     if (addBtn) addBtn.style.display = canAdd ? '' : 'none';
 
-    const html = this.allProducts.length ? `<div class="product-grid">${
-      this.allProducts.map(p => `
-        <div class="product-card" onclick="products.showDetail('${p.id}')">
+    // 搜索筛选
+    const keyword = (document.getElementById('product-search')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('product-status-filter')?.value || 'all';
+    let list = this.allProducts;
+
+    if (statusFilter !== 'all') {
+      list = list.filter(p => p.status === statusFilter);
+    }
+    if (keyword) {
+      list = list.filter(p =>
+        (p.name || '').toLowerCase().includes(keyword) ||
+        (p.category || '').toLowerCase().includes(keyword) ||
+        (p.description || '').toLowerCase().includes(keyword)
+      );
+    }
+
+    // 统计
+    const activeCount = this.allProducts.filter(p => p.status === 'active').length;
+    const inactiveCount = this.allProducts.length - activeCount;
+    const statEl = document.getElementById('stat-products');
+    if (statEl) statEl.textContent = activeCount;
+
+    const html = list.length ? `<div class="product-grid">${
+      list.map(p => `
+        <div class="product-card" onclick="products.showDetail('${p.id}')" style="position:relative;">
+          <span style="position:absolute;top:8px;right:8px;font-size:11px;padding:2px 8px;border-radius:10px;background:${p.status === 'active' ? 'var(--success-bg, #e8f5e9)' : '#f5f5f5'};color:${p.status === 'active' ? 'var(--success, #4caf50)' : 'var(--text-secondary)'}">${p.status === 'active' ? '在售' : '下架'}</span>
           <div class="product-image">
-            ${p.images && p.images.length ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;">` : '🧴'}
+            ${p.images && p.images.length ? `<img src="${p.images[0]}" style="width:100%;height:100%;object-fit:cover;">` : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;color:var(--text-secondary);">🧴</div>'}
           </div>
           <div class="product-info">
-            <div class="product-name">${p.name}</div>
-            <div class="product-category">${p.category}${p.custom_capability ? ' · 可定制' : ''}</div>
+            <div class="product-name">${escapeHtml(p.name)}</div>
+            <div class="product-category">${escapeHtml(p.category || '')}${p.custom_capability ? ' · 可定制' : ''}${p.sample_available ? ' · 可取样' : ''}</div>
             <div class="product-price">¥${p.price_min || 0} - ¥${p.price_max || 0}<span style="font-size:11px;color:var(--text-secondary);">/${p.price_unit || '件'}</span></div>
-            <div class="product-moq">MOQ: ${p.moq} ${p.price_unit || '件'}</div>
+            <div class="product-moq">MOQ: ${p.moq || 0} ${p.price_unit || '件'}</div>
           </div>
         </div>
       `).join('')
@@ -53,9 +77,11 @@ const products = {
     document.getElementById('product-form-title').textContent = '添加商品';
     document.getElementById('product-photo-preview').innerHTML = '';
     this._editPhotos = [];
-    // 隐藏删除按钮（新建模式）
     const deleteBtn = document.querySelector('#product-form .btn-outline');
     if (deleteBtn) deleteBtn.style.display = 'none';
+    // 重置状态选择
+    const statusSel = document.getElementById('product-status');
+    if (statusSel) statusSel.value = 'active';
     showModal('product-modal');
   },
 
@@ -64,7 +90,7 @@ const products = {
     if (!p) return;
 
     document.getElementById('product-id').value = p.id;
-    document.getElementById('product-name').value = p.name;
+    document.getElementById('product-name').value = p.name || '';
     document.getElementById('product-category').value = p.category || '';
     document.getElementById('product-description').value = p.description || '';
     document.getElementById('product-moq').value = p.moq || '';
@@ -73,20 +99,35 @@ const products = {
     document.getElementById('product-price-unit').value = p.price_unit || '件';
     document.getElementById('product-lead-time').value = p.lead_time || '';
     document.getElementById('product-custom').checked = p.custom_capability || false;
+    document.getElementById('product-sample').checked = p.sample_available || false;
+    document.getElementById('product-sample-price').value = p.sample_price || '';
+    const statusSel = document.getElementById('product-status');
+    if (statusSel) statusSel.value = p.status || 'active';
     document.getElementById('product-form-title').textContent = '编辑商品';
 
     // 图片预览
     this._editPhotos = p.images || [];
     const preview = document.getElementById('product-photo-preview');
-    preview.innerHTML = this._editPhotos.map(url => `<img src="${url}" style="width:60px;height:60px;border-radius:6px;object-fit:cover;margin:4px;">`).join('');
+    preview.innerHTML = this._editPhotos.map((url, i) => `<div style="position:relative;display:inline-block;margin:4px;">
+      <img src="${url}" style="width:60px;height:60px;border-radius:6px;object-fit:cover;">
+      <span onclick="event.stopPropagation();products.removePhoto(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--danger);color:white;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;">×</span>
+    </div>`).join('');
 
-    // 控制编辑/删除按钮权限
     const deleteBtn = document.querySelector('#product-form .btn-outline');
     if (deleteBtn) {
       deleteBtn.style.display = hasPermission('btn:product:delete') ? '' : 'none';
     }
 
     showModal('product-modal');
+  },
+
+  removePhoto(index) {
+    this._editPhotos.splice(index, 1);
+    const preview = document.getElementById('product-photo-preview');
+    preview.innerHTML = this._editPhotos.map((url, i) => `<div style="position:relative;display:inline-block;margin:4px;">
+      <img src="${url}" style="width:60px;height:60px;border-radius:6px;object-fit:cover;">
+      <span onclick="event.stopPropagation();products.removePhoto(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--danger);color:white;border-radius:50%;font-size:10px;display:flex;align-items:center;justify:pointer;cursor:pointer;">×</span>
+    </div>`).join('');
   },
 
   async handlePhotoUpload(input) {
@@ -98,7 +139,11 @@ const products = {
       this._editPhotos = this._editPhotos || [];
       this._editPhotos.push(url);
       const preview = document.getElementById('product-photo-preview');
-      preview.innerHTML += `<img src="${url}" style="width:60px;height:60px;border-radius:6px;object-fit:cover;margin:4px;">`;
+      const i = this._editPhotos.length - 1;
+      preview.innerHTML += `<div style="position:relative;display:inline-block;margin:4px;">
+        <img src="${url}" style="width:60px;height:60px;border-radius:6px;object-fit:cover;">
+        <span onclick="event.stopPropagation();products.removePhoto(${i})" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--danger);color:white;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;">×</span>
+      </div>`;
       showToast('照片已添加 ✅');
     } catch (e) {
       showToast('上传失败: ' + e.message);
@@ -109,7 +154,6 @@ const products = {
   async save() {
     const id = document.getElementById('product-id').value;
 
-    // 权限检查
     if (id && !hasPermission('btn:product:edit')) {
       showToast('无权编辑商品');
       return;
@@ -121,17 +165,20 @@ const products = {
 
     const formData = {
       supplier_id: state.supplier.id,
+      company_id: state.supplier.company_id || null,
       name: document.getElementById('product-name').value.trim(),
       category: document.getElementById('product-category').value.trim(),
       description: document.getElementById('product-description').value.trim(),
-      moq: parseInt(document.getElementById('product-moq').value) || 0,
+      moq: parseInt(document.getElementById('product-moq').value) || 1,
       price_min: parseFloat(document.getElementById('product-price-min').value) || null,
       price_max: parseFloat(document.getElementById('product-price-max').value) || null,
       price_unit: document.getElementById('product-price-unit').value || '件',
       lead_time: document.getElementById('product-lead-time').value.trim(),
       custom_capability: document.getElementById('product-custom').checked,
+      sample_available: document.getElementById('product-sample').checked,
+      sample_price: document.getElementById('product-sample-price').value.trim(),
       images: this._editPhotos || [],
-      status: 'active',
+      status: document.getElementById('product-status')?.value || 'active',
       updated_at: new Date().toISOString()
     };
 
@@ -160,7 +207,7 @@ const products = {
       showToast('无权删除商品');
       return;
     }
-    if (!confirm('确定删除该商品？')) return;
+    if (!confirm('确定删除该商品？此操作不可恢复。')) return;
     try {
       const { error } = await db.from('products').delete().eq('id', id);
       if (error) throw error;
@@ -169,6 +216,20 @@ const products = {
       this.load();
     } catch (e) {
       showToast('删除失败: ' + e.message);
+    }
+  },
+
+  async toggleStatus(id) {
+    const p = this.allProducts.find(item => item.id === id);
+    if (!p) return;
+    const newStatus = p.status === 'active' ? 'inactive' : 'active';
+    try {
+      const { error } = await db.from('products').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+      showToast(newStatus === 'active' ? '已上架 ✅' : '已下架');
+      this.load();
+    } catch (e) {
+      showToast('操作失败: ' + e.message);
     }
   }
 };

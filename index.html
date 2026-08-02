@@ -132,6 +132,14 @@
       <div class="page-title" style="margin-bottom:0;">商品管理</div>
       <button class="btn btn-primary btn-sm" onclick="products.showAddForm()" style="width:auto;">+ 添加</button>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <input type="text" id="product-search" class="form-input" placeholder="搜索商品名称/品类..." style="flex:1;min-width:150px;font-size:13px;padding:8px 12px;" oninput="products.render()">
+      <select id="product-status-filter" class="form-select" style="width:auto;font-size:13px;padding:8px 12px;" onchange="products.render()">
+        <option value="all">全部状态</option>
+        <option value="active">在售</option>
+        <option value="inactive">已下架</option>
+      </select>
+    </div>
     <div id="products-list"></div>
   </div>
 
@@ -420,6 +428,24 @@
           <input type="checkbox" id="product-custom"> 支持定制（配方/包装/色号等）
         </label>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="product-sample"> 可提供样品
+          </label>
+        </div>
+        <div class="form-group">
+          <label>样品价格(元)</label>
+          <input type="text" id="product-sample-price" class="form-input" placeholder="如：50">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>商品状态</label>
+        <select id="product-status" class="form-select">
+          <option value="active">在售</option>
+          <option value="inactive">下架</option>
+        </select>
+      </div>
       <div class="form-group">
         <label>商品图片</label>
         <input type="file" accept="image/*" multiple onchange="products.handlePhotoUpload(this)" style="font-size:13px;">
@@ -610,7 +636,7 @@
 <script src="js/app.js?v=3"></script>
 <script src="js/dashboard.js?v=3"></script>
 <script src="js/orders.js?v=3"></script>
-<script src="js/products.js?v=3"></script>
+<script src="js/products.js?v=4"></script>
 <script src="js/inquiries.js?v=3"></script>
 <script src="js/roles.js?v=3"></script>
 <script src="js/staff.js?v=3"></script>
