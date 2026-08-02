@@ -204,8 +204,8 @@ img { max-width: 100%; display: block; }
 .tab-label { font-size: 10px; white-space: nowrap; }
 
 /* ===== Page Container ===== */
-.page { display: none; padding: 16px; }
-.page.active { display: block; }
+.page { display: none !important; padding: 16px; }
+.page.active { display: block !important; }
 .page-title {
   font-size: 18px;
   font-weight: 700;

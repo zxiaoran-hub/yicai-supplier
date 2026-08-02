@@ -358,7 +358,10 @@ function switchPage(page) {
 
   const pageEl = document.getElementById(`page-${page}`);
   const tabEl = document.querySelector(`.tab-item[data-page="${page}"]`);
-  if (pageEl) pageEl.classList.add('active');
+  if (pageEl) {
+    pageEl.style.display = '';
+    pageEl.classList.add('active');
+  }
   if (tabEl) tabEl.classList.add('active');
 
   // 触发页面数据加载
