@@ -7,14 +7,31 @@ const products = {
   allProducts: [],
 
   async load() {
-    if (!state.supplier) return;
+    if (!state.supplier || !state.supplier.id) {
+      console.warn('products.load: supplier未加载，等待重试...');
+      showToast('正在加载供应商信息...');
+      // 等待 supplier 加载完成后重试
+      let retries = 0;
+      while ((!state.supplier || !state.supplier.id) && retries < 10) {
+        await new Promise(r => setTimeout(r, 500));
+        retries++;
+      }
+      if (!state.supplier || !state.supplier.id) {
+        showToast('供应商信息加载失败，请刷新页面重试');
+        return;
+      }
+    }
     const { data, error } = await db
       .from('products')
       .select('*')
       .eq('supplier_id', state.supplier.id)
       .order('created_at', { ascending: false });
 
-    if (error) { showToast('加载商品失败: ' + error.message); return; }
+    if (error) {
+      console.error('products.load error:', error);
+      showToast('加载商品失败: ' + error.message);
+      return;
+    }
 
     this.allProducts = data || [];
     this.render();
@@ -163,6 +180,12 @@ const products = {
       return;
     }
 
+    // 确保 supplier 数据已加载
+    if (!state.supplier || !state.supplier.id) {
+      showToast('供应商信息未加载，请刷新页面重试');
+      return;
+    }
+
     const formData = {
       supplier_id: state.supplier.id,
       company_id: state.supplier.company_id || null,
@@ -187,17 +210,31 @@ const products = {
 
     try {
       if (id) {
-        const { error } = await db.from('products').update(formData).eq('id', id);
+        const { data: updated, error } = await db.from('products').update(formData).eq('id', id).select();
         if (error) throw error;
+        if (!updated || updated.length === 0) {
+          showToast('更新未生效，请检查权限');
+          return;
+        }
         showToast('商品更新成功 ✅');
       } else {
-        const { error } = await db.from('products').insert(formData);
-        if (error) throw error;
+        console.log('products.save: 插入数据', JSON.stringify({...formData, images: `[${formData.images.length}张图片]`}));
+        const { data: inserted, error } = await db.from('products').insert(formData).select();
+        if (error) {
+          console.error('products.save insert error:', error);
+          throw error;
+        }
+        if (!inserted || inserted.length === 0) {
+          showToast('插入未生效，请检查权限或刷新重试');
+          return;
+        }
+        console.log('products.save: 插入成功', inserted[0].id);
         showToast('商品添加成功 ✅');
       }
       hideModal('product-modal');
       this.load();
     } catch (e) {
+      console.error('products.save exception:', e);
       showToast('保存失败: ' + e.message);
     }
   },
