@@ -63,7 +63,7 @@ const inquiries = {
       showToast('供应商信息未加载，请刷新页面');
       return;
     }
-    const inquiry = this.allInquiries.find(i => i.id === inquiryId);
+    const inquiry = this.allInquiries.find(i => Number(i.id) === Number(inquiryId));
     if (!inquiry) return;
     document.getElementById('quote-inquiry-id').value = inquiryId;
     document.getElementById('quote-inquiry-info').textContent = `${inquiry.title || inquiry.category || '-'} · 数量${inquiry.quantity || '-'}`;
@@ -92,7 +92,7 @@ const inquiries = {
     if (!price || price <= 0) { showToast('请输入有效报价'); return; }
 
     try {
-      const inquiry = this.allInquiries.find(i => i.id === inquiryId);
+      const inquiry = this.allInquiries.find(i => Number(i.id) === Number(inquiryId));
       console.log('[Inquiries] 提交报价:', {
         inquiry_id: inquiryId,
         supplier_id: state.supplier.id,
@@ -127,7 +127,7 @@ const inquiries = {
   },
 
   showDetail(inquiryId) {
-    const i = this.allInquiries.find(item => item.id === inquiryId);
+    const i = this.allInquiries.find(item => Number(item.id) === Number(inquiryId));
     if (!i) return;
 
     const daysLeft = i.deadline ? Math.ceil((new Date(i.deadline) - new Date()) / 86400000) : null;
