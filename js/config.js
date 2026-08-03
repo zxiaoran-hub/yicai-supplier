@@ -20,3 +20,27 @@ function getAuthHeaders() {
   }
   return {};
 }
+
+// ===== 工具函数 =====
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function getStatusClass(status) {
+  const map = {
+    'open': 'badge-primary',
+    'closed': 'badge-default',
+    'pending': 'badge-warning',
+    'accepted': 'badge-success',
+    'rejected': 'badge-danger',
+    'producing': 'badge-info',
+    'completed': 'badge-success',
+    'cancelled': 'badge-default',
+    'active': 'badge-success',
+    'inactive': 'badge-default'
+  };
+  return map[status] || 'badge-default';
+}

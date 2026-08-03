@@ -562,6 +562,9 @@ img { max-width: 100%; display: block; }
 .badge-success { background: #E8F5E9; color: #2E7D32; }
 .badge-warning { background: #FFF3E0; color: #E65100; }
 .badge-info { background: #E3F2FD; color: #1565C0; }
+.badge-danger { background: #FFEBEE; color: #C62828; }
+.badge-primary { background: #E3F2FD; color: #1565C0; }
+.badge-default { background: #F5F5F5; color: #757575; }
 
 /* ===== Empty State ===== */
 .empty-state {
