@@ -184,7 +184,24 @@
 
   <!-- ===== 需求大厅 ===== -->
   <div id="page-inquiries" class="page">
-    <div class="page-title">需求大厅</div>
+    <div class="page-header-bar">
+      <div class="page-title" style="margin-bottom:0;">需求大厅</div>
+    </div>
+    <div class="inquiry-search-bar" style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <input type="text" id="inquiry-search" class="form-input" placeholder="搜索关键词（标题/品类/描述）" style="flex:1;min-width:160px;" oninput="inquiries.filterList()">
+      <select id="inquiry-category-filter" class="form-select" style="width:auto;min-width:120px;" onchange="inquiries.filterList()">
+        <option value="">全部品类</option>
+        <option value="护肤">护肤</option>
+        <option value="彩妆">彩妆</option>
+        <option value="面膜">面膜</option>
+        <option value="精华">精华</option>
+        <option value="洗护">洗护</option>
+        <option value="防晒">防晒</option>
+        <option value="香氛">香氛</option>
+        <option value="身体护理">身体护理</option>
+        <option value="个护">个护</option>
+      </select>
+    </div>
     <div id="inquiries-list"></div>
   </div>
 
@@ -676,7 +693,7 @@
 <script src="js/dashboard.js?v=4"></script>
 <script src="js/orders.js?v=3"></script>
 <script src="js/products.js?v=6"></script>
-<script src="js/inquiries.js?v=8"></script>
+<script src="js/inquiries.js?v=9"></script>
 <script src="js/roles.js?v=3"></script>
 <script src="js/staff.js?v=3"></script>
 <script src="js/profile.js?v=3"></script>
