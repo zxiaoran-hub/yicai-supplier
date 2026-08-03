@@ -145,17 +145,8 @@ const inquiries = {
       <div class="info-row"><span class="info-label">状态</span><span class="info-value"><span class="badge" style="background:${i.status === 'open' ? '#e8f5e9' : '#f5f5f5'};color:${i.status === 'open' ? '#2e7d32' : '#999'};padding:2px 10px;border-radius:10px;font-size:12px;">${i.status === 'open' ? '询价中' : '已截止'}</span></span></div>
     `;
 
-    // 查看已有的报价
-    html += `<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">`;
-    html += `<div style="font-size:14px;font-weight:600;margin-bottom:8px;">已有报价</div>`;
-    html += `<div id="quote-list-for-${i.id}" style="font-size:13px;color:var(--text-secondary);">加载中...</div>`;
-    html += `</div>`;
-
     document.getElementById('inquiry-detail-content').innerHTML = html;
     showModal('inquiry-detail-modal');
-
-    // 加载该询价的报价列表
-    this.loadQuotesForInquiry(i.id);
   },
 
   async loadQuotesForInquiry(inquiryId) {
