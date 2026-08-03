@@ -6,7 +6,7 @@ const inquiries = {
 
   async load() {
     const { data, error } = await db
-      .from('inquiries')
+      .from('buyer_inquiries')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -19,24 +19,22 @@ const inquiries = {
   render() {
     const canQuote = hasPermission('btn:quote:submit');
     const html = this.allInquiries.length ? this.allInquiries.map(i => {
-      const displayName = i.is_anonymous ? (i.buyer_display_name || '匿名品牌方') : i.buyer_name;
-      const anonymousBadge = i.is_anonymous ? '<span class="inquiry-badge" style="background:var(--gold);color:white;margin-left:8px;">匿名</span>' : '';
+      const displayName = '品牌方';
       return `
       <div class="inquiry-card">
         <div class="inquiry-header">
           <span class="inquiry-buyer">${displayName}</span>
-          ${anonymousBadge}
           <span class="inquiry-badge">${i.status === 'open' ? '进行中' : '已截止'}</span>
         </div>
-        <div class="inquiry-product">${i.product_name}</div>
+        <div class="inquiry-product">${i.title || i.category || '-'}</div>
         <div class="inquiry-detail">
-          <span>📦 ${i.quantity} ${i.unit}</span>
-          <span>💰 ¥${i.budget_min || '?'}-${i.budget_max || '?'}</span>
+          <span>📦 ${i.quantity || '-'}</span>
+          <span>💰 ¥${i.target_price || '?'}</span>
           <span>📅 截止${formatDate(i.deadline)}</span>
         </div>
         ${i.description ? `<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">${i.description}</div>` : ''}
         <div class="inquiry-actions">
-          ${canQuote ? `<button class="btn btn-primary btn-sm" onclick="inquiries.showQuote('${i.id}')">报价</button>` : ''}
+          ${canQuote && i.status === 'open' ? `<button class="btn btn-primary btn-sm" onclick="inquiries.showQuote('${i.id}')">报价</button>` : ''}
           <button class="btn btn-outline btn-sm" onclick="inquiries.showDetail('${i.id}')">详情</button>
         </div>
       </div>
@@ -52,9 +50,8 @@ const inquiries = {
     }
     const inquiry = this.allInquiries.find(i => i.id === inquiryId);
     if (!inquiry) return;
-    const displayName = inquiry.is_anonymous ? (inquiry.buyer_display_name || '匿名品牌方') : inquiry.buyer_name;
     document.getElementById('quote-inquiry-id').value = inquiryId;
-    document.getElementById('quote-inquiry-info').textContent = `${displayName} · ${inquiry.product_name} · ${inquiry.quantity}${inquiry.unit}`;
+    document.getElementById('quote-inquiry-info').textContent = `${inquiry.title || inquiry.category || '-'} · 数量${inquiry.quantity || '-'}`;
     document.getElementById('quote-price').value = '';
     document.getElementById('quote-moq').value = '';
     document.getElementById('quote-lead-time').value = '';
@@ -76,10 +73,15 @@ const inquiries = {
     if (!price) { showToast('请输入报价'); return; }
 
     try {
-      const { error } = await db.from('inquiry_quotes').insert({
+      const inquiry = this.allInquiries.find(i => i.id === inquiryId);
+      const { error } = await db.from('supplier_quotes').insert({
         inquiry_id: inquiryId,
+        inquiry_company_id: inquiry ? inquiry.company_id : null,
+        inquiry_created_by: inquiry ? inquiry.created_by : null,
+        inquiry_title: inquiry ? inquiry.title : null,
         supplier_id: state.supplier.id,
-        price: price,
+        supplier_name: state.supplier.company_name,
+        unit_price: price,
         moq: moq,
         lead_time: leadTime,
         message: message,

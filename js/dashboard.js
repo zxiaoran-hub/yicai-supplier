@@ -30,9 +30,9 @@ const dashboard = {
 
     // 并行加载数据
     const [ordersRes, productsRes, inquiriesRes] = await Promise.all([
-      db.from('orders').select('*').eq('supplier_id', sid).order('created_at', { ascending: false }),
+      db.from('buyer_orders').select('*').eq('supplier_id', sid).order('created_at', { ascending: false }),
       db.from('products').select('*').eq('supplier_id', sid).eq('status', 'active'),
-      db.from('inquiries').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(5)
+      db.from('buyer_inquiries').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(5)
     ]);
 
     const allOrders = ordersRes.data || [];

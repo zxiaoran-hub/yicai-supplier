@@ -9,7 +9,7 @@ const orders = {
     const sid = state.supplier.id;
 
     const { data, error } = await db
-      .from('orders')
+      .from('buyer_orders')
       .select('*')
       .eq('supplier_id', sid)
       .order('created_at', { ascending: false });
@@ -28,15 +28,15 @@ const orders = {
     const html = filtered.length ? filtered.map(o => `
       <div class="order-card status-${o.status}" onclick="orders.showDetail('${o.id}')">
         <div class="order-header">
-          <span class="order-no">${o.order_no}</span>
+          <span class="order-no">#${o.id}</span>
           <span class="order-status">${getStatusLabel(o.status)}</span>
         </div>
-        <div class="order-product">${o.product_name}</div>
-        <div class="order-buyer">客户：${o.buyer_name}</div>
+        <div class="order-product">${o.product_name || '-'}</div>
+        <div class="order-buyer">客户：${o.supplier_name || '-'}</div>
         <div class="order-info">
-          <span>📦 ${o.quantity} ${o.unit}</span>
-          <span>💰 ${formatMoney(o.total_price)}</span>
-          <span>📅 ${formatDate(o.expected_date)}</span>
+          <span>📦 ${o.quantity || 0}</span>
+          <span>💰 ${formatMoney((o.unit_price || 0) * (o.quantity || 0))}</span>
+          <span>📅 ${formatDate(o.delivery_date)}</span>
         </div>
       </div>
     `).join('') : '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">暂无订单</div></div>';
@@ -78,13 +78,13 @@ const orders = {
     `).join('');
 
     // 填充模态框
-    document.getElementById('detail-order-no').textContent = order.order_no;
-    document.getElementById('detail-product').textContent = order.product_name;
-    document.getElementById('detail-buyer').textContent = order.buyer_name;
-    document.getElementById('detail-quantity').textContent = `${order.quantity} ${order.unit}`;
-    document.getElementById('detail-price').textContent = formatMoney(order.total_price);
+    document.getElementById('detail-order-no').textContent = `#${order.id}`;
+    document.getElementById('detail-product').textContent = order.product_name || '-';
+    document.getElementById('detail-buyer').textContent = order.supplier_name || '-';
+    document.getElementById('detail-quantity').textContent = `${order.quantity || 0}`;
+    document.getElementById('detail-price').textContent = formatMoney((order.unit_price || 0) * (order.quantity || 0));
     document.getElementById('detail-status').textContent = getStatusLabel(order.status);
-    document.getElementById('detail-date').textContent = order.expected_date || '-';
+    document.getElementById('detail-date').textContent = order.delivery_date || '-';
     document.getElementById('detail-timeline').innerHTML = timelineHtml || '<div class="empty-state"><div class="empty-text">暂无生产记录</div></div>';
 
     // 更新状态选择
@@ -133,7 +133,7 @@ const orders = {
       };
       const orderStatus = statusMapping[status];
       if (orderStatus) {
-        await db.from('orders').update({ status: orderStatus, updated_at: new Date().toISOString() }).eq('id', this.currentOrderId);
+        await db.from('buyer_orders').update({ status: orderStatus, updated_at: new Date().toISOString() }).eq('id', this.currentOrderId);
       }
 
       showToast('记录添加成功 ✅');

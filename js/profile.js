@@ -200,10 +200,10 @@ const profile = {
     if (!state.supplier) return;
     
     const { data: quotes, error } = await db
-      .from('inquiry_quotes')
+      .from('supplier_quotes')
       .select(`
         *,
-        inquiry:inquiries(id, product_name, category, buyer_display_name, buyer_name, is_anonymous, status)
+        inquiry:buyer_inquiries(id, title, category, status)
       `)
       .eq('supplier_id', state.supplier.id)
       .order('created_at', { ascending: false });
@@ -231,9 +231,7 @@ const profile = {
     container.innerHTML = quotes.map(q => {
       const inquiry = q.inquiry || {};
       const status = statusMap[q.status] || statusMap.pending;
-      const buyerName = inquiry.is_anonymous 
-        ? (inquiry.buyer_display_name || '匿名品牌方')
-        : (inquiry.buyer_name || '品牌方');
+      const buyerName = '品牌方';
       
       return `
         <div class="quote-history-item">
@@ -244,7 +242,7 @@ const profile = {
             <span class="quote-time">${new Date(q.created_at).toLocaleDateString('zh-CN')}</span>
           </div>
           <div class="quote-history-body">
-            <div class="quote-product-name">${inquiry.product_name || '-'}</div>
+            <div class="quote-product-name">${inquiry.title || '-'}</div>
             <div class="quote-meta">
               <span>${inquiry.category || '-'}</span>
               <span>·</span>
@@ -252,7 +250,7 @@ const profile = {
             </div>
           </div>
           <div class="quote-history-footer">
-            <span class="quote-price">¥${parseFloat(q.price).toFixed(2)}/件</span>
+            <span class="quote-price">¥${parseFloat(q.unit_price || 0).toFixed(2)}/件</span>
             <span class="quote-moq">MOQ: ${q.moq || '-'}件</span>
           </div>
         </div>
@@ -269,8 +267,8 @@ const profile = {
     if (!state.supplier) return;
     
     const { data: quotes, error } = await db
-      .from('inquiry_quotes')
-      .select('id, status, created_at, price')
+      .from('supplier_quotes')
+      .select('id, status, created_at, unit_price')
       .eq('supplier_id', state.supplier.id);
     
     if (error) {
