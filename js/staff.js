@@ -16,21 +16,20 @@ const staffManager = {
 
   async loadStaff() {
     try {
-      let query = db.from('user_roles').select(`
-        *,
-        roles:role_id(id, name, description)
-      `);
+      const params = {
+        select: '*, roles:role_id(id, name, description)',
+        order: 'granted_at.desc'
+      };
 
       // 过滤本公司员工
       if (window.userCompanyId) {
-        query = query.eq('company_id', window.userCompanyId);
+        params.filter = { company_id: window.userCompanyId };
       } else if (state.user) {
         // 个人用户只能看到自己的关联
-        query = query.eq('user_id', state.user.id);
+        params.filter = { user_id: state.user.id };
       }
 
-      const { data, error } = await query.order('granted_at', { ascending: false });
-      if (error) throw error;
+      const data = await supabase.query('user_roles', params);
       this.staff = data || [];
       this.render();
     } catch (e) {
@@ -41,12 +40,11 @@ const staffManager = {
 
   async loadRoles() {
     try {
-      let query = db.from('roles').select('id, name, description').order('name');
+      const params = { select: 'id, name, description', order: 'name.asc' };
       if (window.userCompanyId) {
-        query = query.or(`company_id.eq.${window.userCompanyId},company_id.is.null`);
+        params.or = `company_id.eq.${window.userCompanyId},company_id.is.null`;
       }
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await supabase.query('roles', params);
       this.roles = data || [];
     } catch (e) {
       console.error('加载角色列表失败:', e);
@@ -173,8 +171,15 @@ const staffManager = {
     try {
       if (this._editingUserId) {
         // 编辑模式：更新角色关联
-        // 先删除旧关联
-        await db.from('user_roles').delete().eq('user_id', this._editingUserId).eq('company_id', window.userCompanyId);
+        // 先删除旧关联（无旧关联时忽略）
+        try {
+          await supabase.delete('user_roles', {
+            user_id: this._editingUserId,
+            company_id: window.userCompanyId
+          });
+        } catch (e) {
+          console.warn('删除旧角色关联跳过:', e.message);
+        }
         // 插入新关联
         if (selectedRoles.length) {
           const inserts = selectedRoles.map(roleId => ({
@@ -184,20 +189,14 @@ const staffManager = {
             user_email: email,
             granted_by: state.user?.id || null
           }));
-          const { error } = await db.from('user_roles').insert(inserts);
-          if (error) throw error;
+          await supabase.insert('user_roles', inserts);
         }
         showToast('员工角色更新成功 ✅');
       } else {
         // 创建模式：先创建auth用户
         if (!password) { showToast('请输入密码'); return; }
 
-        const { data: authData, error: authError } = await db.auth.signUp({
-          email: email,
-          password: password
-        });
-        if (authError) throw authError;
-
+        const authData = await supabase.signUp(email, password);
         const userId = authData.user.id;
 
         // 创建user_roles关联
@@ -208,8 +207,7 @@ const staffManager = {
           user_email: email,
           granted_by: state.user?.id || null
         }));
-        const { error: roleError } = await db.from('user_roles').insert(inserts);
-        if (roleError) throw roleError;
+        await supabase.insert('user_roles', inserts);
 
         showToast('员工创建成功 ✅');
       }
@@ -225,12 +223,11 @@ const staffManager = {
 
     try {
       // 删除该公司下该用户的所有角色关联
-      let query = db.from('user_roles').delete().eq('user_id', userId);
+      const match = { user_id: userId };
       if (window.userCompanyId) {
-        query = query.eq('company_id', window.userCompanyId);
+        match.company_id = window.userCompanyId;
       }
-      const { error } = await query;
-      if (error) throw error;
+      await supabase.delete('user_roles', match);
       showToast('已移除');
       this.loadStaff();
     } catch (e) {

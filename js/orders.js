@@ -8,13 +8,10 @@ const orders = {
     if (!state.supplier) return;
     const sid = state.supplier.id;
 
-    const { data, error } = await db
-      .from('buyer_orders')
-      .select('*')
-      .eq('supplier_id', sid)
-      .order('created_at', { ascending: false });
-
-    if (error) { showToast('加载订单失败'); return; }
+    const data = await supabase.query('buyer_orders', {
+      filter: { supplier_id: sid },
+      order: 'created_at.desc'
+    });
 
     this.allOrders = data || [];
     this.render();
@@ -61,11 +58,10 @@ const orders = {
     if (!order) return;
 
     // 加载生产记录
-    const { data: records } = await db
-      .from('process_records')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('created_at', { ascending: false });
+    const records = await supabase.query('process_records', {
+      filter: { order_id: orderId },
+      order: 'created_at.desc'
+    });
 
     const timelineHtml = (records || []).map(r => `
       <div class="timeline-item">
@@ -114,7 +110,7 @@ const orders = {
     if (!status) { showToast('请选择生产状态'); return; }
 
     try {
-      const { error } = await db.from('process_records').insert({
+      await supabase.insert('process_records', {
         order_id: this.currentOrderId,
         supplier_id: state.supplier.id,
         status: status,
@@ -122,8 +118,6 @@ const orders = {
         photos: photos,
         operator: state.supplier.contact_name || ''
       });
-
-      if (error) throw error;
 
       // 同步更新订单状态
       const statusMapping = {
@@ -133,7 +127,7 @@ const orders = {
       };
       const orderStatus = statusMapping[status];
       if (orderStatus) {
-        await db.from('buyer_orders').update({ status: orderStatus, updated_at: new Date().toISOString() }).eq('id', this.currentOrderId);
+        await supabase.update('buyer_orders', { status: orderStatus, updated_at: new Date().toISOString() }, { id: this.currentOrderId });
       }
 
       showToast('记录添加成功 ✅');

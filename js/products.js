@@ -21,17 +21,10 @@ const products = {
         return;
       }
     }
-    const { data, error } = await db
-      .from('products')
-      .select('*')
-      .eq('supplier_id', state.supplier.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('products.load error:', error);
-      showToast('加载商品失败: ' + error.message);
-      return;
-    }
+    const data = await supabase.query('products', {
+      filter: { supplier_id: state.supplier.id },
+      order: 'created_at.desc'
+    });
 
     this.allProducts = data || [];
     this.render();
@@ -210,8 +203,7 @@ const products = {
 
     try {
       if (id) {
-        const { data: updated, error } = await db.from('products').update(formData).eq('id', id).select();
-        if (error) throw error;
+        const updated = await supabase.update('products', formData, { id });
         if (!updated || updated.length === 0) {
           showToast('更新未生效，请检查权限');
           return;
@@ -219,11 +211,7 @@ const products = {
         showToast('商品更新成功 ✅');
       } else {
         console.log('products.save: 插入数据', JSON.stringify({...formData, images: `[${formData.images.length}张图片]`}));
-        const { data: inserted, error } = await db.from('products').insert(formData).select();
-        if (error) {
-          console.error('products.save insert error:', error);
-          throw error;
-        }
+        const inserted = await supabase.insert('products', formData);
         if (!inserted || inserted.length === 0) {
           showToast('插入未生效，请检查权限或刷新重试');
           return;
@@ -246,8 +234,7 @@ const products = {
     }
     if (!confirm('确定删除该商品？此操作不可恢复。')) return;
     try {
-      const { error } = await db.from('products').delete().eq('id', id);
-      if (error) throw error;
+      await supabase.delete('products', { id });
       showToast('已删除');
       hideModal('product-modal');
       this.load();
@@ -261,8 +248,7 @@ const products = {
     if (!p) return;
     const newStatus = p.status === 'active' ? 'inactive' : 'active';
     try {
-      const { error } = await db.from('products').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
-      if (error) throw error;
+      await supabase.update('products', { status: newStatus, updated_at: new Date().toISOString() }, { id });
       showToast(newStatus === 'active' ? '已上架 ✅' : '已下架');
       this.load();
     } catch (e) {

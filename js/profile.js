@@ -123,7 +123,7 @@ const profile = {
       const url = await uploadImage(file, 'factory');
       const photos = state.supplier.factory_photos || [];
       photos.push(url);
-      await db.from('suppliers').update({ factory_photos: photos }).eq('id', state.supplier.id);
+      await supabase.update('suppliers', { factory_photos: photos }, { id: state.supplier.id });
       state.supplier.factory_photos = photos;
       showToast('照片上传成功 ✅');
       this.load();
@@ -141,7 +141,7 @@ const profile = {
       const url = await uploadImage(file, 'certs');
       const images = state.supplier.cert_images || [];
       images.push(url);
-      await db.from('suppliers').update({ cert_images: images }).eq('id', state.supplier.id);
+      await supabase.update('suppliers', { cert_images: images }, { id: state.supplier.id });
       state.supplier.cert_images = images;
       showToast('证书上传成功 ✅');
       this.load();
@@ -184,8 +184,7 @@ const profile = {
     if (!updates.company_name) { showToast('公司名称不能为空'); return; }
 
     try {
-      const { error } = await db.from('suppliers').update(updates).eq('id', state.supplier.id);
-      if (error) throw error;
+      await supabase.update('suppliers', updates, { id: state.supplier.id });
       Object.assign(state.supplier, updates);
       showToast('保存成功 ✅');
       hideModal('edit-profile-modal');
@@ -199,19 +198,11 @@ const profile = {
   async loadMyQuotes() {
     if (!state.supplier) return;
     
-    const { data: quotes, error } = await db
-      .from('supplier_quotes')
-      .select(`
-        *,
-        inquiry:buyer_inquiries(id, title, category, status)
-      `)
-      .eq('supplier_id', state.supplier.id)
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('加载报价历史失败:', error);
-      return;
-    }
+    const quotes = await supabase.query('supplier_quotes', {
+      select: '*, inquiry:buyer_inquiries(id, title, category, status)',
+      filter: { supplier_id: state.supplier.id },
+      order: 'created_at.desc'
+    });
     
     const container = document.getElementById('my-quotes-list');
     if (!container) return;
@@ -266,15 +257,10 @@ const profile = {
   async loadStats() {
     if (!state.supplier) return;
     
-    const { data: quotes, error } = await db
-      .from('supplier_quotes')
-      .select('id, status, created_at, unit_price')
-      .eq('supplier_id', state.supplier.id);
-    
-    if (error) {
-      console.error('加载统计失败:', error);
-      return;
-    }
+    const quotes = await supabase.query('supplier_quotes', {
+      select: 'id, status, created_at, unit_price',
+      filter: { supplier_id: state.supplier.id }
+    });
     
     const totalQuotes = quotes?.length || 0;
     const acceptedQuotes = quotes?.filter(q => q.status === 'accepted').length || 0;
@@ -318,8 +304,7 @@ const profile = {
     }
     
     try {
-      const { error } = await db.auth.updateUser({ password: newPassword });
-      if (error) throw error;
+      await supabase.changePassword(newPassword);
       
       showToast('密码修改成功 ✅');
       hideModal('account-settings-modal');

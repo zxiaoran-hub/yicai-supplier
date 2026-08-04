@@ -6,17 +6,10 @@ const inquiries = {
   filteredInquiries: [],
 
   async load() {
-    const { data, error } = await db
-      .from('buyer_inquiries')
-      .select('*')
-      .eq('status', 'open')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('inquiries.load error:', error);
-      showToast('加载需求失败');
-      return;
-    }
+    const data = await supabase.query('buyer_inquiries', {
+      filter: { status: 'open' },
+      order: 'created_at.desc'
+    });
 
     this.allInquiries = data || [];
     this.filteredInquiries = [...this.allInquiries];
@@ -123,7 +116,7 @@ const inquiries = {
         unit_price: price
       });
 
-      const { data: inserted, error } = await db.from('supplier_quotes').insert({
+      const inserted = await supabase.insert('supplier_quotes', {
         inquiry_id: parseInt(inquiryId),
         inquiry_company_id: inquiry ? inquiry.company_id : null,
         inquiry_created_by: inquiry ? inquiry.created_by : null,
@@ -135,12 +128,8 @@ const inquiries = {
         lead_time: leadTime,
         message: message,
         status: 'pending'
-      }).select();
+      });
 
-      if (error) {
-        console.error('submitQuote error:', error);
-        throw error;
-      }
       console.log('[Inquiries] 报价提交成功:', inserted);
       showToast('报价提交成功 ✅');
       hideModal('quote-modal');

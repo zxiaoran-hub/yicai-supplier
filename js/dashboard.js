@@ -29,15 +29,11 @@ const dashboard = {
     const sid = state.supplier.id;
 
     // 并行加载数据
-    const [ordersRes, productsRes, inquiriesRes] = await Promise.all([
-      db.from('buyer_orders').select('*').eq('supplier_id', sid).order('created_at', { ascending: false }),
-      db.from('products').select('*').eq('supplier_id', sid).eq('status', 'active'),
-      db.from('buyer_inquiries').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(5)
+    const [allOrders, allProducts, openInquiries] = await Promise.all([
+      supabase.query('buyer_orders', { filter: { supplier_id: sid }, order: 'created_at.desc' }),
+      supabase.query('products', { filter: { supplier_id: sid, status: 'active' } }),
+      supabase.query('buyer_inquiries', { filter: { status: 'open' }, order: 'created_at.desc', limit: 5 })
     ]);
-
-    const allOrders = ordersRes.data || [];
-    const allProducts = productsRes.data || [];
-    const openInquiries = inquiriesRes.data || [];
 
     // 统计
     const activeOrders = allOrders.filter(o => ['pending','confirmed','producing','quality'].includes(o.status));

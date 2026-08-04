@@ -1,11 +1,8 @@
 /**
  * 异采 YiCai 供应商端 - 主应用入口
- * 负责: Supabase初始化、认证、路由、权限控制、公共方法
+ * 负责: 认证、路由、权限控制、公共方法
+ * 数据访问统一使用 config.js 中的 supabase 封装（自建后端 API）
  */
-
-// ===== Supabase 初始化 =====
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ===== 全局状态 =====
 const state = {
@@ -55,8 +52,10 @@ const permissionManager = {
    */
   async loadPermissions(userId) {
     try {
-      const { data, error } = await db.rpc('get_user_permissions', { p_user_id: userId });
-      if (error) {
+      let data = null;
+      try {
+        data = await supabase.rpc('get_user_permissions', { p_user_id: userId });
+      } catch (error) {
         console.warn('加载权限失败(可能RPC未部署), 使用默认权限:', error.message);
         // 如果RPC不存在，给一个基于供应商身份的默认权限集
         this._setDefaultPermissions(userId);
@@ -219,28 +218,6 @@ function getDataFilter() {
   return {};
 }
 
-/**
- * 对Supabase查询链应用数据隔离过滤
- * @param {object} query - Supabase查询链
- * @param {string} idField - 用于过滤的字段名（默认supplier_id）
- * @returns {object} 过滤后的查询链
- */
-function applyDataFilter(query, idField = 'supplier_id') {
-  // 优先按supplier_id（兼容旧数据）
-  if (state.supplier && state.supplier.id) {
-    return query.eq(idField, state.supplier.id);
-  }
-  // 其次按company_id
-  if (window.userCompanyId) {
-    return query.eq('company_id', window.userCompanyId);
-  }
-  // 最后按user_id
-  if (state.user) {
-    return query.eq('user_id', state.user.id);
-  }
-  return query;
-}
-
 // ===== 菜单权限控制 =====
 /**
  * 根据权限更新底部Tab栏的显示/隐藏
@@ -274,9 +251,9 @@ function updateMenuVisibility() {
 const auth = {
   // 登录
   async signIn(email, password) {
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    const data = await supabase.signIn(email, password);
     state.user = data.user;
+    localStorage.setItem('yicai_supplier_user', JSON.stringify(data.user));
     await this.loadSupplier();
     // 登录成功后加载权限
     await permissionManager.loadPermissions(data.user.id);
@@ -285,12 +262,12 @@ const auth = {
 
   // 注册
   async signUp(email, password, supplierId) {
-    const { data, error } = await db.auth.signUp({ email, password });
-    if (error) throw error;
+    const data = await supabase.signUp(email, password);
     state.user = data.user;
+    localStorage.setItem('yicai_supplier_user', JSON.stringify(data.user));
     // 关联供应商
     if (supplierId) {
-      await db.from('suppliers').update({ user_id: data.user.id }).eq('id', supplierId);
+      await supabase.update('suppliers', { user_id: data.user.id }, { id: supplierId });
     }
     await this.loadSupplier();
     // 注册后加载权限
@@ -301,19 +278,17 @@ const auth = {
   // 加载当前用户的供应商档案
   async loadSupplier() {
     if (!state.user) return null;
-    const { data, error } = await db
-      .from('suppliers')
-      .select('*')
-      .eq('user_id', state.user.id)
-      .single();
-    if (error && error.code !== 'PGRST116') throw error;
+    const data = await supabase.querySingle('suppliers', {
+      filter: { user_id: state.user.id }
+    });
     state.supplier = data;
     return data;
   },
 
   // 登出
   async signOut() {
-    await db.auth.signOut();
+    await supabase.signOut();
+    localStorage.removeItem('yicai_supplier_user');
     state.user = null;
     state.supplier = null;
     window.userPermissions = null;
@@ -322,17 +297,36 @@ const auth = {
     showLogin();
   },
 
-  // 检查登录状态
+  // 检查登录状态（从本地令牌 + 用户信息恢复）
   async checkSession() {
-    const { data: { session } } = await db.auth.getSession();
-    if (session) {
-      state.user = session.user;
-      await this.loadSupplier();
-      // 恢复session后加载权限
-      await permissionManager.loadPermissions(session.user.id);
-      return true;
+    const token = localStorage.getItem('yicai_supplier_token');
+    const savedUser = localStorage.getItem('yicai_supplier_user');
+    if (!token || !savedUser) return false;
+
+    // token 临近过期时先尝试刷新；刷新失败则清除登录态
+    await refreshTokenIfNeeded();
+    const validToken = localStorage.getItem('yicai_supplier_token');
+    if (!validToken || isTokenExpired(validToken)) {
+      localStorage.removeItem('yicai_supplier_token');
+      localStorage.removeItem('yicai_supplier_refresh');
+      localStorage.removeItem('yicai_supplier_user');
+      return false;
     }
-    return false;
+
+    try {
+      state.user = JSON.parse(savedUser);
+    } catch (e) {
+      localStorage.removeItem('yicai_supplier_user');
+      return false;
+    }
+    if (!state.user || !state.user.id) {
+      localStorage.removeItem('yicai_supplier_user');
+      return false;
+    }
+    await this.loadSupplier();
+    // 恢复session后加载权限
+    await permissionManager.loadPermissions(state.user.id);
+    return true;
   }
 };
 
@@ -461,15 +455,8 @@ function getStatusLabel(status) {
 
 // ===== 图片上传 =====
 async function uploadImage(file, bucket) {
-  const ext = file.name.split('.').pop();
-  const path = `${Date.now()}_${Math.random().toString(36).substr(2, 8)}.${ext}`;
-  const { data, error } = await db.storage.from(bucket).upload(path, file, {
-    cacheControl: '3600',
-    upsert: false
-  });
-  if (error) throw error;
-  const { data: { publicUrl } } = db.storage.from(bucket).getPublicUrl(data.path);
-  return publicUrl;
+  // 上传到自建存储，直接返回公开 URL
+  return supabase.uploadImage(file, bucket);
 }
 
 // 处理图片选择并上传
@@ -584,7 +571,10 @@ function toggleAuthForm(show) {
 
 // 加载供应商选择列表（注册用）
 async function loadSupplierOptions() {
-  const { data } = await db.from('suppliers').select('id, company_name').is('user_id', null);
+  const data = await supabase.query('suppliers', {
+    select: 'id, company_name',
+    is: { user_id: 'null' }
+  });
   const select = document.querySelector('#register-form [name=supplier]');
   if (select && data) {
     select.innerHTML = '<option value="">选择您的供应商账号</option>' +

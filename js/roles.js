@@ -17,17 +17,16 @@ const roleManager = {
 
   async loadRoles() {
     try {
-      let query = db.from('roles').select('*').order('sort_order', { ascending: true });
+      const params = { order: 'sort_order.asc' };
 
       // 公司管理员只能看到本公司角色和平台级角色
       if (window.userCompanyId) {
-        query = query.or(`company_id.eq.${window.userCompanyId},company_id.is.null`);
+        params.or = `company_id.eq.${window.userCompanyId},company_id.is.null`;
       } else if (!window.userPermissions?.isPlatformAdmin) {
-        query = query.is('company_id', null); // 个人用户只能看平台级
+        params.is = { company_id: 'null' }; // 个人用户只能看平台级
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const data = await supabase.query('roles', params);
       this.roles = data || [];
       this.render();
     } catch (e) {
@@ -38,11 +37,7 @@ const roleManager = {
 
   async loadPermissions() {
     try {
-      const { data, error } = await db
-        .from('permissions')
-        .select('*')
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
+      const data = await supabase.query('permissions', { order: 'sort_order.asc' });
       this.permissions = data || [];
     } catch (e) {
       console.error('加载权限列表失败:', e);
@@ -120,11 +115,10 @@ const roleManager = {
 
     // 加载该角色已有的权限
     try {
-      const { data, error } = await db
-        .from('role_permissions')
-        .select('permission_id')
-        .eq('role_id', roleId);
-      if (error) throw error;
+      const data = await supabase.query('role_permissions', {
+        select: 'permission_id',
+        filter: { role_id: roleId }
+      });
       const checkedIds = (data || []).map(rp => rp.permission_id);
       this._renderPermissionTree(checkedIds);
     } catch (e) {
@@ -197,10 +191,9 @@ const roleManager = {
 
       if (roleId) {
         // 更新角色
-        const { error } = await db.from('roles').update({
+        await supabase.update('roles', {
           name, description, data_scope: dataScope, updated_at: new Date().toISOString()
-        }).eq('id', roleId);
-        if (error) throw error;
+        }, { id: roleId });
       } else {
         // 创建角色
         const insertData = {
@@ -210,22 +203,24 @@ const roleManager = {
           company_id: window.userCompanyId || null,
           is_system: false
         };
-        const { data, error } = await db.from('roles').insert(insertData).select('id').single();
-        if (error) throw error;
-        roleId = data.id;
+        const data = await supabase.insert('roles', insertData);
+        roleId = data[0].id;
       }
 
       // 更新角色权限关联
-      // 先删除旧关联
-      await db.from('role_permissions').delete().eq('role_id', roleId);
+      // 先删除旧关联（角色无旧关联时忽略）
+      try {
+        await supabase.delete('role_permissions', { role_id: roleId });
+      } catch (e) {
+        console.warn('删除旧权限关联跳过:', e.message);
+      }
       // 插入新关联
       if (checkedPerms.length) {
         const inserts = checkedPerms.map(pid => ({
           role_id: roleId,
           permission_id: pid
         }));
-        const { error } = await db.from('role_permissions').insert(inserts);
-        if (error) throw error;
+        await supabase.insert('role_permissions', inserts);
       }
 
       showToast(this.editingRoleId ? '角色更新成功 ✅' : '角色创建成功 ✅');
@@ -243,11 +238,14 @@ const roleManager = {
     if (!confirm(`确定删除角色「${role.name}」？`)) return;
 
     try {
-      // 先删除权限关联
-      await db.from('role_permissions').delete().eq('role_id', roleId);
+      // 先删除权限关联（无关联时忽略）
+      try {
+        await supabase.delete('role_permissions', { role_id: roleId });
+      } catch (e) {
+        console.warn('删除权限关联跳过:', e.message);
+      }
       // 删除角色
-      const { error } = await db.from('roles').delete().eq('id', roleId);
-      if (error) throw error;
+      await supabase.delete('roles', { id: roleId });
       showToast('已删除');
       this.loadRoles();
     } catch (e) {
