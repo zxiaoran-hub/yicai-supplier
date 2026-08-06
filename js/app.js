@@ -364,6 +364,7 @@ function switchPage(page) {
     case 'orders': orders.load(); break;
     case 'products': products.load(); break;
     case 'inquiries': inquiries.load(); break;
+    case 'quotes': if (typeof quotesManager !== 'undefined') quotesManager.load(); break;
     case 'profile': profile.load(); break;
     case 'roles': if (window.roleManager) roleManager.load(); break;
     case 'staff': if (window.staffManager) staffManager.load(); break;

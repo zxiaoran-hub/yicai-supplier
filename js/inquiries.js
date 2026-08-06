@@ -88,6 +88,9 @@ const inquiries = {
     document.getElementById('quote-moq').value = '';
     document.getElementById('quote-lead-time').value = '';
     document.getElementById('quote-message').value = '';
+    const qst = document.getElementById('quote-sample-time'); if (qst) qst.value = '';
+    const qsf = document.getElementById('quote-sample-fee'); if (qsf) qsf.value = '';
+    const qsd = document.getElementById('quote-spec-desc'); if (qsd) qsd.value = '';
     showModal('quote-modal');
   },
 
@@ -105,6 +108,9 @@ const inquiries = {
     const moq = parseInt(document.getElementById('quote-moq').value) || 0;
     const leadTime = document.getElementById('quote-lead-time').value.trim();
     const message = document.getElementById('quote-message').value.trim();
+    const sampleTime = (document.getElementById('quote-sample-time')?.value || '').trim();
+    const sampleFee = (document.getElementById('quote-sample-fee')?.value || '').trim();
+    const specDesc = (document.getElementById('quote-spec-desc')?.value || '').trim();
 
     if (!price || price <= 0) { showToast('请输入有效报价'); return; }
 
@@ -126,6 +132,9 @@ const inquiries = {
         unit_price: price,
         moq: moq,
         lead_time: leadTime,
+        sample_lead_time: sampleTime,
+        sample_fee: sampleFee,
+        spec_description: specDesc,
         message: message,
         status: 'pending'
       });

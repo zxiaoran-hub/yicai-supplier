@@ -1,4 +1,21 @@
 /**
+ * 交货倒计时徽章：对未完成订单显示"距交货 X 天 / 超期 X 天"，便于双方日期预警
+ */
+function countdownBadge(o) {
+  const active = ['pending', 'confirmed', 'producing', 'quality'].includes(o.status);
+  const dateStr = o.delivery_date || o.expected_date;
+  if (!active || !dateStr) return '';
+  const days = Math.ceil((new Date(dateStr).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
+  if (days < 0) {
+    return `<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:#fde8e8;color:var(--danger);margin-right:6px;">超期 ${-days} 天</span>`;
+  }
+  const style = days <= 7
+    ? 'background:#fef3e0;color:var(--warning);'
+    : 'background:var(--bg);color:var(--text-secondary);';
+  return `<span style="font-size:11px;padding:2px 8px;border-radius:10px;${style}margin-right:6px;">距交货 ${days} 天</span>`;
+}
+
+/**
  * 订单管理页面
  */
 const orders = {
@@ -26,7 +43,7 @@ const orders = {
       <div class="order-card status-${o.status}" onclick="orders.showDetail('${o.id}')">
         <div class="order-header">
           <span class="order-no">#${o.id}</span>
-          <span class="order-status">${getStatusLabel(o.status)}</span>
+          <span>${countdownBadge(o)}<span class="order-status">${getStatusLabel(o.status)}</span></span>
         </div>
         <div class="order-product">${o.product_name || '-'}</div>
         <div class="order-buyer">客户：${o.supplier_name || '-'}</div>

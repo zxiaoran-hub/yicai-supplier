@@ -180,6 +180,18 @@
     <div id="products-list"></div>
   </div>
 
+  <!-- ===== 我的报价 ===== -->
+  <div id="page-quotes" class="page">
+    <div class="page-title">我的报价</div>
+    <div class="filter-tabs">
+      <div class="filter-tab active" onclick="quotesManager.filter('all')">全部</div>
+      <div class="filter-tab" onclick="quotesManager.filter('pending')">待评审</div>
+      <div class="filter-tab" onclick="quotesManager.filter('accepted')">已接受</div>
+      <div class="filter-tab" onclick="quotesManager.filter('rejected')">已拒绝</div>
+    </div>
+    <div id="quotes-list"></div>
+  </div>
+
   <!-- ===== 需求大厅 ===== -->
   <div id="page-inquiries" class="page">
     <div class="page-header-bar">
@@ -349,6 +361,10 @@
     <div class="tab-item" data-page="inquiries" onclick="switchPage('inquiries')">
       <span class="tab-icon">💬</span>
       <span class="tab-label">需求</span>
+    </div>
+    <div class="tab-item" data-page="quotes" onclick="switchPage('quotes')">
+      <span class="tab-icon">💰</span>
+      <span class="tab-label">报价</span>
     </div>
     <div class="tab-item" data-page="roles" onclick="switchPage('roles')">
       <span class="tab-icon">🛡️</span>
@@ -535,6 +551,18 @@
       <input type="text" id="quote-lead-time" class="form-input" placeholder="如：15-20天">
     </div>
     <div class="form-group">
+      <label>打样周期</label>
+      <input type="text" id="quote-sample-time" class="form-input" placeholder="如：7天">
+    </div>
+    <div class="form-group">
+      <label>打样费</label>
+      <input type="text" id="quote-sample-fee" class="form-input" placeholder="如：500元，大货下单后退还">
+    </div>
+    <div class="form-group">
+      <label>工艺/尺寸描述</label>
+      <textarea id="quote-spec-desc" class="form-input" rows="3" placeholder="工艺、尺寸、规格等说明，便于采购方定标"></textarea>
+    </div>
+    <div class="form-group">
       <label>备注</label>
       <textarea id="quote-message" class="form-input" rows="3" placeholder="补充说明..."></textarea>
     </div>
@@ -687,11 +715,12 @@
 
 <!-- JS -->
 <script src="js/config.js?v=7"></script>
-<script src="js/app.js?v=5"></script>
+<script src="js/app.js?v=7"></script>
 <script src="js/dashboard.js?v=5"></script>
-<script src="js/orders.js?v=4"></script>
+<script src="js/orders.js?v=5"></script>
 <script src="js/products.js?v=7"></script>
-<script src="js/inquiries.js?v=10"></script>
+<script src="js/inquiries.js?v=11"></script>
+<script src="js/quotes.js?v=1"></script>
 <script src="js/roles.js?v=4"></script>
 <script src="js/staff.js?v=4"></script>
 <script src="js/profile.js?v=4"></script>
